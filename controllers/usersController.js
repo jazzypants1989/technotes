@@ -57,47 +57,45 @@ const createNewUser = asyncHandler(async (req, res) => {
     }
 });
 
-// @desc    Update a user
-// @route   PATCH /users
-// @access  Private
-
+// @desc Update a user
+// @route PATCH /users
+// @access Private
 const updateUser = asyncHandler(async (req, res) => {
-    const { id, username, roles, active, password } = req.body;
+    const { id, username, roles, active, password } = req.body
 
-    // Confirm incoming data
-    if (!id || !username || !roles.length || !Array.isArray(roles || typeof active !== 'boolean')) {
-        return res.status(400).json({ message: 'All Fields are required' });
+    // Confirm data 
+    if (!id || !username || !Array.isArray(roles) || !roles.length || typeof active !== 'boolean') {
+        return res.status(400).json({ message: 'All fields except password are required' })
     }
 
-    const user = await User.findById(id).exec();
+    // Does the user exist to update?
+    const user = await User.findById(id).exec()
 
     if (!user) {
-        return res.status(400).json({ message: 'User not found' });
+        return res.status(400).json({ message: 'User not found' })
     }
 
-    // Check if user already exists
-    const duplicate = await User.findOne({ username }).lean().exec();
-    // Allow user to update their own username
+    // Check for duplicate 
+    const duplicate = await User.findOne({ username }).lean().exec()
+
+    // Allow updates to the original user 
     if (duplicate && duplicate?._id.toString() !== id) {
-        return res.status(409).json({ message: 'User already exists' });
+        return res.status(409).json({ message: 'Duplicate username' })
     }
 
-    user.username = username;
-    user.roles = roles;
-    user.active = active;
+    user.username = username
+    user.roles = roles
+    user.active = active
 
     if (password) {
-        user.password = await bcrypt.hash(password, 10);
+        // Hash password 
+        user.password = await bcrypt.hash(password, 10) // salt rounds 
     }
 
-    const updatedUser = await user.save();
+    const updatedUser = await user.save()
 
-    if (updatedUser) {
-        res.status(201).json({ message: `User ${updatedUser.username} updated. You did it!` })
-    } else {
-        res.status(400).json({ message: 'You did not do it. Try fixing your data.' });
-    }
-});
+    res.json({ message: `${updatedUser.username} updated` })
+})
 
 // @desc    Delete a user
 // @route   DELETE /users
