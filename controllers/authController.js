@@ -1,12 +1,11 @@
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const asyncHandler = require('express-async-handler');
 
 // @desc    Login
 // @route   POST auth
 // @access  Public
-const login = asyncHandler(async (req, res) => {
+const login = async (req, res) => {
     const { username, password } = req.body;
 
     if (!username || !password) {
@@ -32,13 +31,13 @@ const login = asyncHandler(async (req, res) => {
         }
     },
     process.env.ACCESS_TOKEN_SECRET,
-    { expiresIn: '1m' }
+    { expiresIn: '20m' }
     )
 
     const refreshToken = jwt.sign({
         "username": user.username },
         process.env.REFRESH_TOKEN_SECRET,
-        { expiresIn: '10m' }
+        { expiresIn: '1d' }
     )
 
     // Create secure cookie with refresh token
@@ -51,12 +50,12 @@ const login = asyncHandler(async (req, res) => {
 
     // Send the access token containing user name and roles to the client
     res.json({ accessToken });
-});
+};
 
 // @desc    Refresh token
 // @route   GET auth/refresh
 // @access  Public
-const refresh = asyncHandler(async (req, res) => {
+const refresh = async (req, res) => {
     const cookies = req.cookies;
     if (!cookies?.jwt) return res.status(401).json({ message: 'You need to log back in. You have no cookies. I require delicious cookies.' });
 
@@ -85,13 +84,13 @@ const refresh = asyncHandler(async (req, res) => {
             res.json({ accessToken });
         })
     )
-});
+};
 
 // @desc    Logout
 // @route   POST auth/logout
 // @access  Public
 
-const logout = asyncHandler(async (req, res) => {
+const logout = async (req, res) => {
     const cookies = req.cookies;
     if (!cookies?.jwt) return res.sendStatus(204);
     res.clearCookie('jwt', 
@@ -101,7 +100,7 @@ const logout = asyncHandler(async (req, res) => {
         sameSite: 'none'
     });
     res.json({ message: 'Byyyeeee!!!' });
-});
+};
 
 module.exports = {
     login,
